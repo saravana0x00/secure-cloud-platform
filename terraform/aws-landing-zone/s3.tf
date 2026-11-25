@@ -1,5 +1,7 @@
 # Who is running this (used to build the key policy)
+# Who is running this, and in which region (used to build the key policy)
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 # Encryption key we control (not the default AWS-managed one)
 resource "aws_kms_key" "data" {
@@ -16,10 +18,26 @@ resource "aws_kms_key" "data" {
         Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
         Action    = "kms:*"
         Resource  = "*"
+      },
+      {
+        Sid       = "AllowCloudWatchLogs"
+        Effect    = "Allow"
+        Principal = { Service = "logs.${data.aws_region.current.name}.amazonaws.com" }
+        Action = [
+          "kms:Encrypt*",
+          "kms:Decrypt*",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:Describe*"
+        ]
+        Resource = "*"
       }
     ]
   })
 }
+
+# Encryption key we control (not the default AWS-managed one)
+
 
 # The bucket
 resource "aws_s3_bucket" "secure_data" {
