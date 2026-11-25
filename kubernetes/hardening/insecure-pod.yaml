@@ -1,0 +1,14 @@
+# INTENTIONALLY INSECURE - used to prove Pod Security Standards block bad pods.
+# This pod must be rejected by the secure-apps namespace.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: insecure-demo
+  namespace: secure-apps
+spec:
+  containers:
+    - name: app
+      image: nginx:1.27
+      securityContext:
+        privileged: true
+        runAsUser: 0
