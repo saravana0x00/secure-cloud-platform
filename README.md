@@ -18,6 +18,33 @@ Built as a portfolio project to demonstrate cloud security engineering skills.
 
 ## Status
 
+## Security guardrails in action
+
+Every push and pull request is scanned with [Checkov](https://www.checkov.io/).
+To prove the guardrail works, I opened a pull request containing an intentionally
+insecure S3 bucket (public-read ACL, no encryption, no public access block).
+The pipeline rejected it, and branch protection blocked the merge.
+
+**The pull request fails the required security check:**
+
+![Pipeline blocks insecure code](docs/images/pipeline-blocks-insecure-code.png)
+
+**The scan reports exactly what is wrong:**
+
+![Checkov failures](docs/images/checkov-failures.png)
+
+**Merging is blocked until the check passes:**
+
+![Merge blocked](docs/images/merge-blocked.png)
+
+### Accepted risks
+
+Two findings are deliberately skipped on the demo buckets, with the reason
+recorded next to the code: cross-region replication (doubles cost) and event
+notifications (not needed for a demo). Documenting accepted risk is part of the
+review process, not a way to hide findings.
+
+
 Work in progress. Modules are being built one at a time.
 
 ## Disclaimer
