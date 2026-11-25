@@ -1,0 +1,13 @@
+# Local-only workaround: the WSL2 kernel has no /sys/kernel/security,
+# so calico-node cannot mount it. Remove that mount for this laptop cluster.
+spec:
+  template:
+    spec:
+      containers:
+        - name: calico-node
+          volumeMounts:
+            - mountPath: /sys/kernel/security
+              $patch: delete
+      volumes:
+        - name: sys-kernel-security
+          $patch: delete
