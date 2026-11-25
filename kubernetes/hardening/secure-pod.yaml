@@ -3,6 +3,8 @@ kind: Pod
 metadata:
   name: secure-demo
   namespace: secure-apps
+  labels:
+    app: web
 spec:
   securityContext:
     runAsNonRoot: true

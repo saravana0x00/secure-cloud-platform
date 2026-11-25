@@ -1,0 +1,12 @@
+# Deny all traffic to and from every pod in this namespace.
+# Specific allow rules are added separately for each workload.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: secure-apps
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
