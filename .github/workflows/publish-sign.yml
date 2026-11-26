@@ -1,0 +1,54 @@
+name: Publish and Sign
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  publish-sign:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # push the image to ghcr.io
+      id-token: write   # lets the workflow prove its identity for keyless signing
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set the image name (registry names must be lowercase)
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/sample-app" >> "$GITHUB_ENV"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push the image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: app
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4.1.2
+
+      - name: Sign the image by digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "${IMAGE}@${DIGEST}"
+
+      - name: Verify the signature
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          IDENTITY: https://github.com/${{ github.workflow_ref }}
+        run: |
+          cosign verify "${IMAGE}@${DIGEST}" \
+            --certificate-identity "${IDENTITY}" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com
