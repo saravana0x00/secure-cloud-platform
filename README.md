@@ -69,6 +69,43 @@ recorded next to the code: cross-region replication (doubles cost) and event
 notifications (not needed for a demo). Documenting accepted risk is part of the
 review process, not a way to hide findings.
 
+## Supply chain security
+
+Every merge to `main` runs a pipeline that treats the container image as a controlled artifact.
+
+| Stage | Control | Tool |
+|---|---|---|
+| Build | Hardened Dockerfile: non-root user, health check, patched package | Docker |
+| Scan | Fails on fixable HIGH or CRITICAL vulnerabilities | Trivy |
+| Inventory | SBOM generated per build (CycloneDX) and stored as a build artifact | Trivy |
+| Publish | Image pushed to GitHub Container Registry | GitHub Actions |
+| Sign | Keyless signature by digest, no private key stored | Sigstore Cosign |
+| Verify | Signature checked against the workflow identity in the same run | Cosign |
+
+**Verification output from the pipeline:**
+
+```
+Verification for ghcr.io/saravana0x00/sample-app@sha256:2cf82fa3... --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - The code-signing certificate was verified using trusted certificate authority certificates
+```
+
+**Design notes**
+
+- The image is signed by digest, not by tag, because a tag can later point to a different image.
+- The vulnerability gate ignores findings that have no fix yet. Blocking on those would fail every build, since nothing can be done about them. They are tracked, not ignored.
+- Signing is keyless: the workflow proves its identity with a short-lived token, so there is no key to leak or rotate.
+
+**To verify an image yourself** (replace the digest with the one from a pipeline run):
+
+```
+cosign verify ghcr.io/saravana0x00/sample-app@sha256:<digest> \
+  --certificate-identity https://github.com/saravana0x00/secure-cloud-platform/.github/workflows/publish-sign.yml@refs/heads/main \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
 ## Status
 Work in progress. Modules are being built one at a time.
 
