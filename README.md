@@ -105,6 +105,56 @@ cosign verify ghcr.io/saravana0x00/sample-app@sha256:<digest> \
   --certificate-identity https://github.com/saravana0x00/secure-cloud-platform/.github/workflows/publish-sign.yml@refs/heads/main \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
+## Automated remediation
+
+`automation/s3_remediate.py` finds S3 buckets that have drifted from the secure baseline and repairs the safe problems.
+Terraform and Checkov catch bad configuration before deployment; this tool catches **drift**, when someone changes a
+setting by hand afterwards.
+
+| Check | Action |
+|---|---|
+| Public access block missing or partial | Fixed automatically with `--fix` |
+| No default encryption | Fixed automatically with `--fix` (SSE-S3) |
+| Versioning off | Reported only, because it changes cost and behaviour and needs an owner decision |
+
+**Design choices**
+
+- Dry run by default. It only reports unless `--fix` is passed.
+- Exits with code 1 when it finds fixable drift without `--fix`, so a pipeline can fail on drift.
+- Only low-risk fixes are automatic. Anything that needs a human decision is reported.
+- Nine unit tests run on every pull request, without needing LocalStack.
+
+**Run against a deliberately drifted bucket (LocalStack):**
+
+```
+> python automation/s3_remediate.py
+[FINDING] drift-demo-bad: public access is not fully blocked
+[FINDING] drift-demo-bad: no default encryption
+[REPORT]  drift-demo-bad: versioning is off (needs an owner decision, not auto-fixed)
+Done. Fixable problems found: 2          (exit code 1)
+
+> python automation/s3_remediate.py --fix
+[FIXED]   drift-demo-bad: public access block applied
+[FIXED]   drift-demo-bad: default encryption (SSE-S3) applied
+
+> python automation/s3_remediate.py
+[REPORT]  drift-demo-bad: versioning is off (needs an owner decision, not auto-fixed)
+Done. Fixable problems found: 0          (exit code 0)
+```
+
+**Lessons from building it**
+
+- The first version missed a missing-encryption case: LocalStack answered with an empty configuration instead of an
+  error, and the check treated any answer as "encrypted". Manual testing found it, and a unit test now covers it.
+- New buckets are already encrypted and public-access-blocked by default, in both LocalStack and current AWS, so
+  drift only appears after someone changes a setting.
+
+**Limitations**
+
+- Tested against LocalStack only, not real AWS. On real AWS, deleting a bucket's encryption setting resets it to
+  the default, so the encryption finding may not reproduce there.
+- It checks S3 buckets only. Bucket policies, ACLs and customer-managed key use are not examined.
+- It runs on demand, not on events, and does not yet send alerts.
 
 ## Status
 Work in progress. Modules are being built one at a time.
