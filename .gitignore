@@ -45,3 +45,7 @@ terraform.rc
 
 # Generated locally; CI produces the SBOM as a build artifact
 sbom/
+
+# Python and pytest caches
+__pycache__/
+.pytest_cache/
