@@ -1,0 +1,35 @@
+name: Image Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  image-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Build the image
+        run: docker build -t sample-app:ci app
+
+      - name: Fail on fixable HIGH or CRITICAL vulnerabilities
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image --scanners vuln \
+            --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 sample-app:ci
+
+      - name: Generate the SBOM
+        run: |
+          mkdir sbom
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD":/work -w /work aquasec/trivy:latest image \
+            --format cyclonedx --output sbom/sample-app.cdx.json sample-app:ci
+
+      - name: Upload the SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-app-sbom
+          path: sbom/sample-app.cdx.json
