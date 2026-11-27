@@ -1,6 +1,6 @@
 # Threat model: secure-cloud-platform
 
-Status: version 1 (scope, assets, data flow, STRIDE analysis, residual risks).
+Status: version 1.1 (scope, assets, data flow, STRIDE analysis, residual risks; row 7 and risk 3 updated after secret scanning was added).
 
 ## 1. Scope
 
@@ -85,7 +85,7 @@ S = Spoofing, T = Tampering, R = Repudiation, I = Information disclosure, D = De
 | 4 | Public sources to pipeline | The base image or a package has a known vulnerability | T | Trivy gate on fixable HIGH and CRITICAL findings; patched package; SBOM per build | Unfixable findings are tracked, not blocked; base image referenced by tag |
 | 5 | Pipeline to registry | An image is replaced or forged after the build | S, T | Keyless signature by digest; verified in the same run | Nothing checks the signature at deploy time; no admission policy in the cluster |
 | 6 | Pipeline | A pipeline token is abused to push or change things | E | Per-job permissions on the signing workflow; short-lived tokens | Other workflows have no explicit permissions block |
-| 7 | Pipeline | A secret is committed to the repository | I | Dummy credentials only; state files git-ignored | No secret scanning in the pipeline yet |
+| 7 | Pipeline | A secret is committed to the repository | I | Dummy credentials only; state files git-ignored; Gitleaks scans the full Git history on every push and pull request, and a self-test proves the scanner still catches a fake token | Pattern-based, so unusual secret formats can be missed; the Gitleaks image uses `latest`; scanning happens after a push, so a pushed secret must still be revoked |
 | 8 | Cloud account | A bucket is exposed publicly | I | Public access block; KMS encryption; Checkov rules; drift tool | Tested on LocalStack only; bucket policies and ACLs not examined by the tool |
 | 9 | Cloud account | The KMS key is misused or over-shared | I, E | Rotation; explicit key policy | Account root administers the key; one key for everything; policy not tested on real AWS |
 | 10 | Cloud account | Someone changes a setting by hand after deployment (drift) | T | Remediation tool detects and fixes the safe cases | Runs on demand, not on events or a schedule; no alerting |
@@ -97,7 +97,7 @@ S = Spoofing, T = Tampering, R = Repudiation, I = Information disclosure, D = De
 
 1. **Workflow tampering and admin bypass (rows 1, 2).** A change that weakens a check can be merged, and admins can bypass protection. Fix: require a reviewer, add CODEOWNERS for the workflow folder, and disable bypass.
 2. **Unpinned third-party actions and tool images (row 3).** Pin to commit SHAs and image digests.
-3. **No secret scanning (row 7).** Add a secret scan to the pipeline.
+3. **Secret scanning is detective, not preventive (row 7).** Gitleaks now scans history in the pipeline, but it runs after a push. Consider enabling GitHub's push protection so secrets are blocked before they reach the repository.
 4. **No signature check at deploy time (row 5).** Verify signatures with an admission policy before a pod can start.
 5. **Log integrity and alerting (rows 10, 11).** Protect logs from tampering and alert on drift.
 
