@@ -156,8 +156,49 @@ Done. Fixable problems found: 0          (exit code 0)
 - It checks S3 buckets only. Bucket policies, ACLs and customer-managed key use are not examined.
 - It runs on demand, not on events, and does not yet send alerts.
 
+## Skills demonstrated
+
+What this project shows, with the evidence and an honest depth rating. Built means working and tested here,
+Partial means covered in part, Not yet means planned.
+
+| Skill | What it covers | Evidence | Depth |
+|---|---|---|---|
+| Cloud security architecture | Secure-by-default baseline: encryption, private storage, network isolation, logging | `terraform/aws-landing-zone/` (Terraform, AWS KMS, S3, VPC) | Built, AWS only |
+| Infrastructure as code security | Misconfiguration scanning before deployment | Checkov in the pipeline, documented accepted risks | Built |
+| CI/CD security automation | Required checks that block unsafe changes | Five required checks in GitHub Actions | Built |
+| Policy as code | Reusable rules with a regression test | `policy-as-code/` (Rego, Conftest) | Built |
+| Container and Kubernetes security | Restricted pods, default-deny networking, least-privilege traffic rules | `kubernetes/` (kind, Calico, Pod Security Standards, network policies) | Built, local cluster only |
+| Software supply chain security | Image scanning, SBOM, keyless signing and verification | Trivy, CycloneDX, Sigstore Cosign | Built, no deploy-time check |
+| Security automation and tooling | Detect and repair configuration drift, with unit tests | `automation/` (Python, boto3, pytest) | Built, on demand only |
+| Threat modeling and risk analysis | STRIDE analysis with ranked residual risks | `docs/threat-model.md` | Built |
+| Compliance and control mapping | NIST 800-53 controls mapped to evidence, with gaps | `compliance/nist-800-53-mapping.md` | Partial, mapping only |
+| Incident analysis | Blameless post-mortem with root cause and corrective actions | `docs/incident-postmortem.md` (simulated) | Built, simulated |
+| Security communication | One-page brief with ranked risks and decisions requested | `docs/exec-brief.md` | Built |
+| Cloud posture management | Drift detection for S3 only; no posture scanner or reporting | `automation/` | Partial |
+| Multi-cloud security | Second-cloud baseline | Not yet | Not yet |
+| Service mesh and workload identity | Mutual TLS between services | Not yet | Not yet |
+
+## Documentation
+
+| Document | What it is |
+|---|---|
+| [Threat model](docs/threat-model.md) | Scope, data flow, STRIDE analysis, top residual risks |
+| [NIST 800-53 mapping](compliance/nist-800-53-mapping.md) | Controls, evidence, status and gaps |
+| [Executive brief](docs/exec-brief.md) | One-page posture summary with decisions requested |
+| [Incident post-mortem](docs/incident-postmortem.md) | Simulated blameless review with corrective actions |
+| [Landing zone module](terraform/aws-landing-zone/README.md) | Controls, risks reduced, how to run |
+
 ## Status
-Work in progress. Modules are being built one at a time.
+
+Core pipeline, Kubernetes hardening, policy as code, supply chain controls, automation and documentation are in place.
+
+Next, in rough priority order:
+
+1. Close the top residual risks in the threat model: pin third-party actions, require review of pipeline changes
+2. Second-cloud baseline and a control-equivalence table
+3. Posture reporting with an open-source scanner
+4. Service mesh with mutual TLS
+5. Architecture decision records
 
 ## Disclaimer
 
