@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # Keeps pinned GitHub Actions current; the version comment next to each commit ID is updated too
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Test dependencies for the automation tool
+  - package-ecosystem: "pip"
+    directory: "/automation"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Base image of the sample app
+  - package-ecosystem: "docker"
+    directory: "/app"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Terraform provider versions
+  - package-ecosystem: "terraform"
+    directory: "/terraform/aws-landing-zone"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
