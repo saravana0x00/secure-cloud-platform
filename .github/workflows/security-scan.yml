@@ -31,12 +31,12 @@ jobs:
 
       - name: Real manifests must pass the policy
         run: |
-          docker run --rm -v "$PWD":/project -w /project openpolicyagent/conftest \
+          docker run --rm -v "$PWD":/project -w /project openpolicyagent/conftest@sha256:0e77cdf7c1fcde035f3c579e4aaa6664ee2a8be5777eaa9af9f520cdd02280c0 \
             test --policy policy-as-code/kubernetes kubernetes/hardening
 
       - name: Insecure demo must be rejected by the policy
         run: |
-          if docker run --rm -v "$PWD":/project -w /project openpolicyagent/conftest \
+          if docker run --rm -v "$PWD":/project -w /project openpolicyagent/conftest@sha256:0e77cdf7c1fcde035f3c579e4aaa6664ee2a8be5777eaa9af9f520cdd02280c0 \
             test --policy policy-as-code/kubernetes kubernetes/demo-insecure; then
             echo "ERROR: the insecure demo pod passed the policy, so the policy is broken"
             exit 1
