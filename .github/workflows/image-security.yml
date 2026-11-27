@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Build the image
         run: docker build -t sample-app:ci app
@@ -29,7 +29,7 @@ jobs:
             --format cyclonedx --output sbom/sample-app.cdx.json sample-app:ci
 
       - name: Upload the SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sample-app-sbom
           path: sbom/sample-app.cdx.json
