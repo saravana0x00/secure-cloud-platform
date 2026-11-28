@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # Run as an unprivileged user, never as root
 RUN useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin appuser
