@@ -9,6 +9,10 @@ RUN apt-get update \
     && apt-get install -y --only-upgrade libzstd1 \
     && rm -rf /var/lib/apt/lists/*
 
+# The app does not need pip at runtime. Removing it also removes the libraries bundled inside it,
+# which is where several scanner findings come from, and leaves no package manager in the final image.
+RUN python -m pip uninstall -y pip
+
 WORKDIR /app
 COPY app.py .
 
